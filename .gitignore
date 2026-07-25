@@ -1,0 +1,23 @@
+# Segredos e variáveis de ambiente (NUNCA SUBIR PARA O GIT)
+.env
+.env.local
+*.env
+
+# Cache do Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Ambientes virtuais
+venv/
+.venv/
+env/
+ENV/
+
+# VS Code / IDEs
+.vscode/
+.idea/
+
+# Logs e arquivos de teste temporários
+*.log
+scratch/
