@@ -11,13 +11,14 @@ load_dotenv(override=True)
 from ml_pipeline import MLPipeline
 from tavily_service import buscar_noticias, TavilyNewsService
 from twilio_service import enviar_whatsapp, TwilioService
+from groq_agent import GroqNewsAgent
 
-TARGET_HOUR = 18
+TARGET_HOUR = 20
 TARGET_MINUTE = 0
 
 def job_diario():
-    """Rotina diária com Machine Learning (Classificação + KMeans Clustering)"""
-    print("[JARVYS Daily ML] Buscando notícias para pipeline de ML...")
+    """Rotina diária das 20:00 com Machine Learning (Classificação + KMeans Clustering)"""
+    print("[JARVYS Daily ML 20:00] Buscando notícias para pipeline de ML...")
     noticias = buscar_noticias("tecnologia e inteligência artificial", max_results=5)
     if not noticias:
         print("[JARVYS Daily ML] Nenhuma notícia encontrada.")
@@ -26,7 +27,7 @@ def job_diario():
     pipeline = MLPipeline(n_clusters=3)
     noticias_processadas = pipeline.processar(noticias)
 
-    mensagem = "🤖 *JARVYS News 18h* 📰📱\n\n"
+    mensagem = "🤖 *JARVYS News 20h — Raspagem Diária* 📰📱\n\n"
     for n in noticias_processadas:
         mensagem += f"📰 *[{n['categoria']}]* (Cluster {n['cluster']})\n{n['title']}\n🔗 {n['url']}\n\n"
 
@@ -39,7 +40,7 @@ def execute_daily_news_dispatch():
     """
     now_str = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
     print("=" * 70)
-    print(f"⏰ [{now_str}] EXECUTANDO ROTINA DIÁRIA DO JARVYS (NOTÍCIAS 18:00)")
+    print(f"⏰ [{now_str}] EXECUTANDO ROTINA DIÁRIA DO JARVYS (RASPAGEM 20:00)")
     print("=" * 70)
 
     agent = GroqNewsAgent()
@@ -49,7 +50,7 @@ def execute_daily_news_dispatch():
     print(f"[JARVYS Daily] Raspando notícias ao vivo nos canais alvos (Olhar Digital & Canaltech)...")
     news_digest = agent.generate_response(user_message=prompt_msg, use_search=True)
 
-    header = "🌅 *[RESUMO DIÁRIO DAS 18:00 - JARVYS]* 🤖📱\n\n"
+    header = "🌙 *[RASPAGEM DIÁRIA DAS 20:00 - JARVYS]* 🤖📱\n\n"
     final_message = header + news_digest
 
     print(f"[JARVYS Daily] Enviando resumo diário para {user_phone}...")

@@ -66,10 +66,12 @@ class GroqNewsAgent:
             return (
                 "📌 *MENU DE COMANDOS DO JARVYS* 🤖💻\n\n"
                 "• `/noticias` - Busca notícias de TI e IA ao vivo no Olhar Digital e Canaltech\n"
+                "• `/raspagem` - Raspagem completa com classificação ML (Naive Bayes + KMeans)\n"
                 "• `/diario` - Receba o resumo executivo das principais novidades de hoje\n"
                 "• `/limpar` - Reseta o contexto de conversa\n"
                 "• `/status` - Verifica o status do servidor e da infraestrutura na nuvem\n"
                 "• `/ajuda` - Exibe este menu de comandos rápidos\n\n"
+                "⏰ _Raspagem automática diária às 20:00 (Brasília)_\n\n"
                 "Você também pode enviar qualquer dúvida ou pesquisa em texto livre para o Claudemir! 🚀"
             )
 
@@ -93,7 +95,54 @@ class GroqNewsAgent:
         if cmd in ["/diario", "/boletim"]:
             print(f"[GroqNewsAgent] Comando /diario recebido.")
             news_digest = self.generate_response("Principais destaques de tecnologia e IA do dia no Olhar Digital e Canaltech", use_search=True)
-            return f"🌅 *[BOLETIM DIÁRIO SOLICITADO - JARVYS]* 🤖📱\n\n{news_digest}"
+            return f"🌙 *[BOLETIM DIÁRIO SOLICITADO - JARVYS]* 🤖📱\n\n{news_digest}"
+
+        if cmd in ["/raspagem", "/raspar", "/scrape"]:
+            print(f"[GroqNewsAgent] Comando /raspagem recebido. Executando raspagem completa com ML Pipeline...")
+            try:
+                from tavily_service import buscar_noticias
+                from ml_pipeline import MLPipeline
+
+                # Busca notícias brutas nos portais alvos
+                noticias_raw = buscar_noticias("tecnologia e inteligência artificial", max_results=5)
+
+                if not noticias_raw:
+                    return (
+                        "⚠️ *Raspagem concluída sem resultados*, Claudemir.\n\n"
+                        "Nenhuma notícia foi encontrada nos portais _Olhar Digital_ e _Canaltech_ neste momento. "
+                        "Tente novamente em alguns minutos. 🤖"
+                    )
+
+                # Processa com ML Pipeline (Classificação + Clustering)
+                pipeline = MLPipeline(n_clusters=min(3, len(noticias_raw)))
+                noticias_processadas = pipeline.processar(noticias_raw)
+
+                time_ctx = GreetingContextSkill.get_time_context()
+                mensagem = (
+                    f"🕷️ *RASPAGEM COMPLETA - JARVYS* 🤖📰\n"
+                    f"📅 {time_ctx['data_extenso']} às {time_ctx['hora']}\n"
+                    f"🎯 Portais: _Olhar Digital_ e _Canaltech_\n\n"
+                )
+
+                for i, n in enumerate(noticias_processadas, 1):
+                    title = n.get("title", "Sem título")
+                    url = n.get("url", "")
+                    categoria = n.get("categoria", "Geral")
+                    cluster = n.get("cluster", 0)
+                    snippet = n.get("snippet", n.get("content", ""))
+
+                    mensagem += f"*{i}.* 📰 *{title}*\n"
+                    mensagem += f"   🏷️ Categoria (ML): _{categoria}_ | Cluster: {cluster}\n"
+                    if snippet:
+                        mensagem += f"   📝 {snippet[:150]}...\n" if len(snippet) > 150 else f"   📝 {snippet}\n"
+                    mensagem += f"   🔗 {url}\n\n"
+
+                mensagem += f"✅ *{len(noticias_processadas)} notícias raspadas e classificadas via ML Pipeline*"
+                print(f"[GroqNewsAgent] Raspagem concluída: {len(noticias_processadas)} notícias processadas.")
+                return mensagem
+            except Exception as e:
+                print(f"[GroqNewsAgent] Erro na raspagem: {e}")
+                return f"❌ Erro ao executar raspagem, Claudemir: {e}\nTente novamente em instantes. 🤖"
 
         return None
 
