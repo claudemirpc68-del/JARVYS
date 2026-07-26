@@ -20,8 +20,7 @@ class TwilioService:
     def send_message(self, to_number: str, body: str) -> bool:
         """
         Envia uma mensagem (WhatsApp ou SMS) para o número do destinatário usando a API REST do Twilio.
-        :param to_number: Número de destino (ex: 'whatsapp:+5511999999999' ou '+5511999999999')
-        :param body: Texto da mensagem
+        Mensagens longas são divididas automaticamente em partes de até 1500 caracteres.
         """
         if not self.account_sid or not self.auth_token:
             print("[TwilioService] TWILIO_ACCOUNT_SID ou TWILIO_AUTH_TOKEN não configurados.")
@@ -37,27 +36,66 @@ class TwilioService:
         else:
             to_number = clean_num
 
-        data = {
-            "From": self.from_number,
-            "To": to_number,
-            "Body": body
-        }
+        # Divide mensagens longas (limite Twilio Sandbox: 1600 chars)
+        MAX_CHARS = 1500
+        if len(body) <= MAX_CHARS:
+            parts = [body]
+        else:
+            parts = self._split_message(body, MAX_CHARS)
+            print(f"[TwilioService] Mensagem dividida em {len(parts)} parte(s).")
 
-        try:
-            response = requests.post(
-                self.api_url,
-                data=data,
-                auth=(self.account_sid, self.auth_token)
-            )
-            if response.status_code in [200, 201]:
-                print(f"[TwilioService] Mensagem enviada com sucesso para {to_number}")
-                return True
-            else:
-                print(f"[TwilioService] Erro ao enviar ({response.status_code}): {response.text}")
-                return False
-        except Exception as e:
-            print(f"[TwilioService] Exceção ao enviar mensagem Twilio: {e}")
-            return False
+        all_success = True
+        for i, part in enumerate(parts, 1):
+            if len(parts) > 1:
+                part_header = f"({i}/{len(parts)}) " if i > 1 else ""
+                part = part_header + part if i > 1 else part
+
+            data = {
+                "From": self.from_number,
+                "To": to_number,
+                "Body": part
+            }
+
+            try:
+                response = requests.post(
+                    self.api_url,
+                    data=data,
+                    auth=(self.account_sid, self.auth_token)
+                )
+                if response.status_code in [200, 201]:
+                    print(f"[TwilioService] Parte {i}/{len(parts)} enviada com sucesso para {to_number}")
+                else:
+                    print(f"[TwilioService] Erro ao enviar parte {i} ({response.status_code}): {response.text}")
+                    all_success = False
+            except Exception as e:
+                print(f"[TwilioService] Exceção ao enviar parte {i}: {e}")
+                all_success = False
+
+            # Pequeno delay entre partes para evitar rate limiting
+            if i < len(parts):
+                import time
+                time.sleep(1)
+
+        return all_success
+
+    @staticmethod
+    def _split_message(text: str, max_chars: int = 1500) -> list:
+        """Divide uma mensagem longa em partes, quebrando em linhas inteiras."""
+        lines = text.split("\n")
+        parts = []
+        current_part = ""
+
+        for line in lines:
+            # Se adicionar esta linha ultrapassa o limite, salva a parte atual
+            if len(current_part) + len(line) + 1 > max_chars and current_part:
+                parts.append(current_part.rstrip())
+                current_part = ""
+            current_part += line + "\n"
+
+        if current_part.strip():
+            parts.append(current_part.rstrip())
+
+        return parts if parts else [text[:max_chars]]
 
 def enviar_whatsapp(body: str, to_number: Optional[str] = None) -> bool:
     """Função auxiliar global para enviar mensagem via Twilio WhatsApp."""
