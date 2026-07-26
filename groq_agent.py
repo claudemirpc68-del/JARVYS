@@ -89,13 +89,13 @@ class GroqNewsAgent:
             user_content += "Instrução: Com base nas notícias acima, forneça um resumo claro e objetivo. VÁ DIRETO AO PONTO das notícias sem se reapresentar ou usar saudações longas (NÃO comece repetindo 'Olá! Sou o JARVYS...'). Destaque as fontes ao final."
         elif is_greeting_msg:
             user_content += (
-                f"Instrução: O usuário enviou uma saudação ({user_message}). Responda com a saudação adequada ao período do dia ({time_ctx['saudacao_sugerida']}), "
-                f"apresente-se amigavelmente como *JARVYS* (seu assistente de TI e IA) e pergunte como pode ajudar hoje."
+                f"Instrução: O usuário enviou uma saudação ({user_message}). Responda chamando o usuário pelo nome (*Claudemir*), usando a saudação adequada ao período do dia ({time_ctx['saudacao_sugerida']}), "
+                f"apresente-se amigavelmente como *JARVYS* (seu assistente de TI e IA) e pergunte como pode ajudá-lo hoje."
             )
         elif is_thanks_msg:
-            user_content += "Instrução: O usuário enviou um agradecimento ou confirmação (ex: 'perfeito', 'obrigado'). Responda com extrema cortesia, confirmando que está à disposição. NÃO busque e NÃO inclua novas notícias."
+            user_content += "Instrução: O usuário enviou um agradecimento ou confirmação (ex: 'perfeito', 'obrigado'). Responda com extrema cortesia chamando-o pelo nome (*Claudemir*), confirmando que está à disposição. NÃO busque e NÃO inclua novas notícias."
         elif is_help_msg:
-            user_content += "Instrução: O usuário perguntou sobre suas habilidades, aplicações ou como você pode ajudá-lo. Apresente-se brevemente como *JARVYS* e forneça EXPLICAÇÕES BREVES e objetivas em tópicos curtos (máximo 1 linha por item): 1) Notícias de TI & IA ao vivo no _Olhar Digital_ e _Canaltech_; 2) Esclarecimento direto de dúvidas sobre tecnologia e IA; 3) Resumo diário automático no WhatsApp às 18:00. Pergunte de forma sucinta o que ele gostaria de explorar."
+            user_content += "Instrução: O usuário perguntou sobre suas habilidades, aplicações ou como você pode ajudá-lo. Apresente-se brevemente como *JARVYS*, cumprimente o *Claudemir* e forneça EXPLICAÇÕES BREVES e objetivas em tópicos curtos (máximo 1 linha por item): 1) Notícias de TI & IA ao vivo no _Olhar Digital_ e _Canaltech_; 2) Esclarecimento direto de dúvidas sobre tecnologia e IA; 3) Resumo diário automático no WhatsApp às 18:00. Pergunte de forma sucinta o que ele gostaria de explorar."
 
         if not self.client:
             return self._generate_simulated_response(user_message, is_greeting_msg, is_thanks_msg, is_help_msg)
