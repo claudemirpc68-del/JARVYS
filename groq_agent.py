@@ -4,6 +4,8 @@ from dotenv import load_dotenv
 from prompt import get_system_prompt
 from tavily_service import TavilyNewsService
 
+from greeting_skill import GreetingContextSkill
+
 load_dotenv()
 
 class GroqNewsAgent:
@@ -21,15 +23,9 @@ class GroqNewsAgent:
                 print("Warning: pacote 'groq' não instalado.")
 
     def _is_greeting(self, message: str) -> bool:
-        """Verifica se a mensagem é uma saudação simples."""
-        msg = message.strip().lower().strip(".!😊👍🙏?, ")
-        clean_msg = msg.replace("jarvys", "").replace("jarvis", "").strip(" ,.!")
-        greetings = [
-            "oi", "olá", "ola", "bom dia", "boa tarde", "boa noite", 
-            "tudo bem", "tudo bem?", "fala jarvys", "hey", "hello", 
-            "salve", "oie", "opa", "start", "iniciar", "menu"
-        ]
-        return msg in greetings or clean_msg in greetings or any(g in msg for g in ["bom dia", "boa tarde", "boa noite", "tudo bem", "fala jarvys"]) or clean_msg in ["oi", "olá", "ola", "oie", "hey", "hello", "salve", "opa"]
+        """Verifica se a mensagem é uma saudação simples via GreetingContextSkill."""
+        is_greet, _ = GreetingContextSkill.is_greeting(message)
+        return is_greet
 
     def _is_thanks_or_confirmation(self, message: str) -> bool:
         """Verifica se a mensagem é um agradecimento, elogio ou confirmação simples."""
@@ -59,7 +55,18 @@ class GroqNewsAgent:
         """
         Gera a resposta do Agente JARVYS via Tavily + Groq API para WhatsApp / SMS.
         """
-        system_prompt = get_system_prompt()
+        base_system_prompt = get_system_prompt()
+        time_ctx = GreetingContextSkill.get_time_context()
+
+        # Injeta contexto temporal dinâmico no System Prompt
+        temporal_context = (
+            f"\n\nCONTEXTO DE TEMPO ATUAL DO SERVIDOR/USUÁRIO:\n"
+            f"- Data Atual: {time_ctx['data_extenso']}\n"
+            f"- Horário Local: {time_ctx['hora']} (Período: {time_ctx['periodo']})\n"
+            f"- Saudação recomendada para o período: {time_ctx['saudacao_sugerida']}"
+        )
+        system_prompt = base_system_prompt + temporal_context
+
         is_greeting_msg = self._is_greeting(user_message)
         is_thanks_msg = self._is_thanks_or_confirmation(user_message)
         is_help_msg = self._is_help_or_capabilities(user_message)
@@ -70,7 +77,7 @@ class GroqNewsAgent:
             print(f"[GroqNewsAgent] Pesquisando notícias no Tavily sobre: '{user_message}'...")
             news_context = self.tavily_service.search_news(user_message)
         elif is_greeting_msg:
-            print(f"[GroqNewsAgent] Saudação identificada: '{user_message}'. Respondendo com recepção do JARVYS.")
+            print(f"[GroqNewsAgent] Saudação identificada: '{user_message}'. Respondendo com recepção do JARVYS ({time_ctx['saudacao_sugerida']}).")
         elif is_thanks_msg:
             print(f"[GroqNewsAgent] Agradecimento/confirmação identificado: '{user_message}'. Respondendo cortêsmente.")
         elif is_help_msg:
@@ -81,7 +88,10 @@ class GroqNewsAgent:
             user_content += f"{news_context}\n"
             user_content += "Instrução: Com base nas notícias acima, forneça um resumo claro e objetivo. VÁ DIRETO AO PONTO das notícias sem se reapresentar ou usar saudações longas (NÃO comece repetindo 'Olá! Sou o JARVYS...'). Destaque as fontes ao final."
         elif is_greeting_msg:
-            user_content += "Instrução: Responda a saudação do usuário com entusiasmo, apresente-se como *JARVYS* (seu assistente de TI e IA) e pergunte como pode ajudar hoje."
+            user_content += (
+                f"Instrução: O usuário enviou uma saudação ({user_message}). Responda com a saudação adequada ao período do dia ({time_ctx['saudacao_sugerida']}), "
+                f"apresente-se amigavelmente como *JARVYS* (seu assistente de TI e IA) e pergunte como pode ajudar hoje."
+            )
         elif is_thanks_msg:
             user_content += "Instrução: O usuário enviou um agradecimento ou confirmação (ex: 'perfeito', 'obrigado'). Responda com extrema cortesia, confirmando que está à disposição. NÃO busque e NÃO inclua novas notícias."
         elif is_help_msg:
