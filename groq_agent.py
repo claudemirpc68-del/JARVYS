@@ -57,8 +57,9 @@ class GroqNewsAgent:
 
         if cmd in ["/limpar", "/reset", "/clear", "limpar"]:
             return (
-                "🧹 *Histórico e contexto de conversa limpos com sucesso, Claudemir!* 🤖\n\n"
-                "Em que posso ajudá-lo agora?"
+                "🧹 *Memória e contexto da IA limpos no servidor com sucesso, Claudemir!* 🤖\n\n"
+                "_(O histórico da conversa com a IA foi resetado. Para apagar as mensagens anteriores da tela do celular, use a opção 'Limpar conversa' do WhatsApp)._\n\n"
+                "Em que posso ajudá-lo agora? 🚀"
             )
 
         if cmd in ["/ajuda", "/help", "/comandos", "/menu"]:
