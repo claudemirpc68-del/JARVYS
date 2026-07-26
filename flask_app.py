@@ -22,14 +22,18 @@ twilio_service = TwilioService()
 
 
 @app.route("/", methods=["GET"])
+def index():
+    return jsonify({
+        "status": "online",
+        "service": "JARVYS - Agente de Notícias TI & IA WhatsApp",
+        "pipeline": "Twilio -> Tavily Search -> ML (Naive Bayes + KMeans) -> Groq LLM -> WhatsApp"
+    })
+
+
 @app.route("/health", methods=["GET"])
 def health():
     """Health check para monitoramento do Coolify."""
-    return jsonify({
-        "status": "healthy",
-        "service": "JARVYS - Agente de Notícias TI & IA WhatsApp",
-        "pipeline": "Twilio -> Tavily Search -> ML (Naive Bayes + KMeans) -> Groq LLM -> WhatsApp"
-    }), 200
+    return jsonify({"status": "healthy"}), 200
 
 
 @app.route("/", methods=["POST"])
@@ -66,10 +70,9 @@ def whatsapp_webhook():
         sys.stdout.flush()
         agent_reply = "⚠️ Desculpe, Claudemir! Ocorreu um erro ao processar sua mensagem. Tente novamente em instantes. 🤖"
 
-    # Envia via Twilio REST (método comprovado de entrega no WhatsApp)
+    # Envia via Twilio REST (método de comprovada entrega direta no WhatsApp)
     rest_success = False
     if sender:
-        # Se sender não contiver 'whatsapp:', formata para a API REST
         target_number = sender if sender.startswith("whatsapp:") else f"whatsapp:{sender}"
         print(f"[Flask WhatsApp] 📤 Disparando resposta via Twilio REST para {target_number}...")
         sys.stdout.flush()
@@ -78,13 +81,11 @@ def whatsapp_webhook():
     if rest_success:
         print("[Flask WhatsApp] ✅ Entrega via Twilio REST realizada com sucesso.")
         sys.stdout.flush()
-        # Se enviou via REST com sucesso, retorna TwiML vazio para evitar mensagem duplicada
         empty_twiml = '<?xml version="1.0" encoding="UTF-8"?><Response></Response>'
         return Response(empty_twiml, mimetype="text/xml")
     else:
         print("[Flask WhatsApp] ⚠️ Twilio REST não enviado (fallback para TwiML síncrono)...")
         sys.stdout.flush()
-        # Fallback para TwiML XML síncrono
         MAX_TWIML_CHARS = 1500
         twiml_reply = agent_reply[:MAX_TWIML_CHARS] if len(agent_reply) > MAX_TWIML_CHARS else agent_reply
 
