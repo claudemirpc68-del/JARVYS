@@ -50,6 +50,8 @@ JARVYS/
 ├── tavily_service.py         # Serviço de busca ao vivo de notícias (Tavily API)
 ├── groq_agent.py             # Agente IA (Groq Llama 3.3 70B)
 ├── twilio_service.py         # Serviço REST de envio via Twilio (WhatsApp/SMS)
+├── ml_pipeline.py            # Pipeline de ML (Supervisionado Naive Bayes + Clustering KMeans)
+├── news_classifier.py        # Classificador de notícias via TF-IDF + Naive Bayes
 ├── flask_app.py              # Servidor Webhook Flask (Porta 5000)
 ├── server.py                 # Servidor Webhook FastAPI (Porta 8000)
 ├── main.py                   # CLI principal de execução do projeto
