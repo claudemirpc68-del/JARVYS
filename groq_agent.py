@@ -22,13 +22,14 @@ class GroqNewsAgent:
 
     def _is_greeting(self, message: str) -> bool:
         """Verifica se a mensagem é uma saudação simples."""
-        msg = message.strip().lower().strip(".!😊👍🙏")
+        msg = message.strip().lower().strip(".!😊👍🙏?, ")
+        clean_msg = msg.replace("jarvys", "").replace("jarvis", "").strip(" ,.!")
         greetings = [
             "oi", "olá", "ola", "bom dia", "boa tarde", "boa noite", 
             "tudo bem", "tudo bem?", "fala jarvys", "hey", "hello", 
             "salve", "oie", "opa", "start", "iniciar", "menu"
         ]
-        return msg in greetings or any(msg == g for g in greetings)
+        return msg in greetings or clean_msg in greetings or any(g in msg for g in ["bom dia", "boa tarde", "boa noite", "tudo bem", "fala jarvys"]) or clean_msg in ["oi", "olá", "ola", "oie", "hey", "hello", "salve", "opa"]
 
     def _is_thanks_or_confirmation(self, message: str) -> bool:
         """Verifica se a mensagem é um agradecimento, elogio ou confirmação simples."""
