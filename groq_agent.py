@@ -51,10 +51,60 @@ class GroqNewsAgent:
         ]
         return any(kw in msg for kw in key_phrases)
 
+    def _process_slash_command(self, message: str) -> Optional[str]:
+        """Processa comandos curtos iniciados por / ou palavras-chave diretas de comando."""
+        cmd = message.strip().lower()
+
+        if cmd in ["/limpar", "/reset", "/clear", "limpar"]:
+            return (
+                "🧹 *Histórico e contexto de conversa limpos com sucesso, Claudemir!* 🤖\n\n"
+                "Em que posso ajudá-lo agora?"
+            )
+
+        if cmd in ["/ajuda", "/help", "/comandos", "/menu"]:
+            return (
+                "📌 *MENU DE COMANDOS DO JARVYS* 🤖💻\n\n"
+                "• `/noticias` - Busca notícias de TI e IA ao vivo no Olhar Digital e Canaltech\n"
+                "• `/diario` - Receba o resumo executivo das principais novidades de hoje\n"
+                "• `/limpar` - Reseta o contexto de conversa\n"
+                "• `/status` - Verifica o status do servidor e da infraestrutura na nuvem\n"
+                "• `/ajuda` - Exibe este menu de comandos rápidos\n\n"
+                "Você também pode enviar qualquer dúvida ou pesquisa em texto livre para o Claudemir! 🚀"
+            )
+
+        if cmd in ["/status", "/ping"]:
+            time_ctx = GreetingContextSkill.get_time_context()
+            return (
+                f"🟢 *JARVYS AGENT ONLINE* 🤖⚡\n\n"
+                f"• *Status*: 100% Operacional\n"
+                f"• *Data Local*: {time_ctx['data_extenso']}\n"
+                f"• *Horário*: {time_ctx['hora']} ({time_ctx['periodo']})\n"
+                f"• *Modelo IA*: Groq Llama 3.3 70B Versatile\n"
+                f"• *Mecanismo de Busca*: Tavily Search (Olhar Digital & Canaltech)\n"
+                f"• *Infraestrutura*: Coolify Cloud VPS / Flask Webhook"
+            )
+
+        if cmd in ["/noticias", "/news"]:
+            print(f"[GroqNewsAgent] Comando /noticias recebido. Buscando notícias ao vivo...")
+            news_ctx = self.tavily_service.search_news("principais notícias de tecnologia e inteligência artificial")
+            return self.generate_response("Principais notícias de TI e IA de hoje", use_search=False)
+
+        if cmd in ["/diario", "/boletim"]:
+            print(f"[GroqNewsAgent] Comando /diario recebido.")
+            news_digest = self.generate_response("Principais destaques de tecnologia e IA do dia no Olhar Digital e Canaltech", use_search=True)
+            return f"🌅 *[BOLETIM DIÁRIO SOLICITADO - JARVYS]* 🤖📱\n\n{news_digest}"
+
+        return None
+
     def generate_response(self, user_message: str, use_search: bool = True) -> str:
         """
         Gera a resposta do Agente JARVYS via Tavily + Groq API para WhatsApp / SMS.
         """
+        # Verifica se é um comando slash (/limpar, /ajuda, /status, etc.)
+        cmd_response = self._process_slash_command(user_message)
+        if cmd_response:
+            return cmd_response
+
         base_system_prompt = get_system_prompt()
         time_ctx = GreetingContextSkill.get_time_context()
 
