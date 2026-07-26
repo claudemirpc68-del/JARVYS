@@ -8,11 +8,29 @@ from dotenv import load_dotenv
 sys.stdout.reconfigure(encoding='utf-8')
 load_dotenv(override=True)
 
-from groq_agent import GroqNewsAgent
-from twilio_service import TwilioService
+from ml_pipeline import MLPipeline
+from tavily_service import buscar_noticias, TavilyNewsService
+from twilio_service import enviar_whatsapp, TwilioService
 
 TARGET_HOUR = 18
 TARGET_MINUTE = 0
+
+def job_diario():
+    """Rotina diária com Machine Learning (Classificação + KMeans Clustering)"""
+    print("[JARVYS Daily ML] Buscando notícias para pipeline de ML...")
+    noticias = buscar_noticias("tecnologia e inteligência artificial", max_results=5)
+    if not noticias:
+        print("[JARVYS Daily ML] Nenhuma notícia encontrada.")
+        return
+
+    pipeline = MLPipeline(n_clusters=3)
+    noticias_processadas = pipeline.processar(noticias)
+
+    mensagem = "🤖 *JARVYS News 18h* 📰📱\n\n"
+    for n in noticias_processadas:
+        mensagem += f"📰 *[{n['categoria']}]* (Cluster {n['cluster']})\n{n['title']}\n🔗 {n['url']}\n\n"
+
+    enviar_whatsapp(mensagem)
 
 def execute_daily_news_dispatch():
     """
@@ -25,7 +43,6 @@ def execute_daily_news_dispatch():
     print("=" * 70)
 
     agent = GroqNewsAgent()
-    twilio = TwilioService()
     user_phone = os.getenv("WHATSAPP_NUMBER", "5511961909818")
 
     prompt_msg = "Principais notícias e destaques de hoje no Olhar Digital e Canaltech sobre tecnologia e inteligência artificial"
@@ -36,7 +53,7 @@ def execute_daily_news_dispatch():
     final_message = header + news_digest
 
     print(f"[JARVYS Daily] Enviando resumo diário para {user_phone}...")
-    success = twilio.send_message(to_number=user_phone, body=final_message)
+    success = enviar_whatsapp(final_message, user_phone)
 
     if success:
         print("✅ Resumo diário enviado com sucesso para o WhatsApp!")

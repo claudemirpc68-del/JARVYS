@@ -59,6 +59,12 @@ class TwilioService:
             print(f"[TwilioService] Exceção ao enviar mensagem Twilio: {e}")
             return False
 
+def enviar_whatsapp(body: str, to_number: Optional[str] = None) -> bool:
+    """Função auxiliar global para enviar mensagem via Twilio WhatsApp."""
+    dest = to_number or os.getenv("WHATSAPP_NUMBER", "5511961909818")
+    service = TwilioService()
+    return service.send_message(to_number=dest, body=body)
+
 if __name__ == "__main__":
     service = TwilioService()
     print("[TwilioService] Inicializado com sucesso.")

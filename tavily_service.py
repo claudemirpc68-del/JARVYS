@@ -83,20 +83,39 @@ class TavilyNewsService:
                 print("[TavilyNewsService] Nenhum resultado retornado do Tavily.")
                 return "Nenhuma notícia recente encontrada nos portais configurados para esta busca."
 
+            # Prepara itens para classificação por Machine Learning
+            news_items = []
+            for item in results:
+                news_items.append({
+                    "title": item.get("title", "Sem título"),
+                    "url": item.get("url", ""),
+                    "content": item.get("content", "Sem conteúdo"),
+                    "published_date": item.get("published_date", "")
+                })
+
+            # Classifica a categoria das notícias via Naive Bayes / Scikit-Learn
+            try:
+                from news_classifier import processar_noticias
+                news_items = processar_noticias(news_items)
+            except Exception as e_cls:
+                print(f"[TavilyNewsService] Aviso na classificação ML: {e_cls}")
+
             news_context = f"NOTÍCIAS E ARTIGOS RECENTES EM TEMPO REAL (PORTAIS: {', '.join(self.target_domains)}):\n\n"
-            for idx, item in enumerate(results, start=1):
+            for idx, item in enumerate(news_items, start=1):
                 title = item.get("title", "Sem título")
                 snippet = item.get("content", "Sem conteúdo")
                 url = item.get("url", "")
                 published_date = item.get("published_date", "")
+                categoria = item.get("categoria", "Geral")
                 source = url.split("/")[2] if "//" in url else "Fonte Web"
 
                 news_context += f"{idx}. TÍTULO: {title}\n"
+                news_context += f"   CATEGORIA (ML): {categoria}\n"
                 news_context += f"   FONTE/PORTAL: {source} ({published_date if published_date else 'recente'})\n"
                 news_context += f"   RESUMO/TRECHO: {snippet}\n"
                 news_context += f"   LINK: {url}\n\n"
 
-            print(f"[TavilyNewsService] Busca concluída com sucesso. {len(results)} notícias encontradas.")
+            print(f"[TavilyNewsService] Busca e classificação ML concluídas com sucesso. {len(news_items)} notícias processadas.")
             return news_context
 
         except Exception as e:
@@ -114,6 +133,54 @@ class TavilyNewsService:
             "   FONTE/PORTAL: canaltech.com.br (2026)\n"
             "   RESUMO/TRECHO: Ferramentas de automação e segurança impulsionam a produtividade das empresas brasileiras.\n"
         )
+
+    def fetch_raw_news(self, query: str = "tecnologia e inteligência artificial", max_results: int = 5) -> List[Dict[str, str]]:
+        """Retorna uma lista de dicionários com as notícias brutas encontradas."""
+        self._ensure_client()
+        results = []
+        if self.client:
+            try:
+                response = self.client.search(
+                    query=f"{query} notícias tecnologia inteligência artificial",
+                    topic="news",
+                    include_domains=self.target_domains,
+                    max_results=max_results,
+                    search_depth="basic"
+                )
+                results = response.get("results", [])
+            except Exception:
+                pass
+        
+        if not results and self.api_key:
+            try:
+                url = "https://api.tavily.com/search"
+                payload = {
+                    "api_key": self.api_key,
+                    "query": f"{query} notícias tecnologia inteligência artificial",
+                    "topic": "news",
+                    "include_domains": self.target_domains,
+                    "max_results": max_results
+                }
+                res = requests.post(url, json=payload, timeout=10)
+                if res.status_code == 200:
+                    results = res.json().get("results", [])
+            except Exception:
+                pass
+
+        news_list = []
+        for r in results:
+            news_list.append({
+                "title": r.get("title", "Sem título"),
+                "url": r.get("url", ""),
+                "snippet": r.get("content", ""),
+                "published_date": r.get("published_date", "")
+            })
+        return news_list
+
+def buscar_noticias(query: str = "tecnologia e inteligência artificial", max_results: int = 5) -> List[Dict[str, str]]:
+    """Função auxiliar global para buscar notícias brutas em formato lista."""
+    service = TavilyNewsService()
+    return service.fetch_raw_news(query, max_results)
 
 if __name__ == "__main__":
     service = TavilyNewsService()

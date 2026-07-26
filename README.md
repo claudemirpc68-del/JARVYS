@@ -45,7 +45,7 @@ O **JARVYS** é um assistente pessoal inteligente desenvolvido em **Python**, pr
 ## 📁 Estrutura do Projeto
 
 ```text
-ALLON HASHTAG/
+JARVYS/
 ├── prompt.py                 # System Prompt e Persona do JARVYS
 ├── tavily_service.py         # Serviço de busca ao vivo de notícias (Tavily API)
 ├── groq_agent.py             # Agente IA (Groq Llama 3.3 70B)
