@@ -51,8 +51,8 @@ async def whatsapp_webhook(request: Request):
     agent_reply = agent.generate_response(user_message=incoming_msg, use_search=True)
     print(f"[WhatsApp Webhook] Resposta do Agente:\n{agent_reply}\n")
 
-    # Tenta enviar via REST Twilio se houver sender e número configurado
-    if sender and twilio_service.account_sid and not twilio_service.account_sid.startswith("AC99aa2c72ab7b9"):
+    # Tenta enviar via REST Twilio se houver sender e credenciais configuradas
+    if sender and twilio_service.account_sid and twilio_service.auth_token:
         twilio_service.send_message(to_number=sender, body=agent_reply)
 
     # Retorna resposta TwiML formatada para o Twilio

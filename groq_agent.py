@@ -166,10 +166,19 @@ class GroqNewsAgent:
             print(f"Erro na chamada à API da Groq: {e}")
             return self._generate_simulated_response(user_message, is_greeting_msg, is_thanks_msg, is_help_msg)
 
-    def _generate_simulated_response(self, user_message: str, is_greeting: bool = False, is_thanks: bool = False) -> str:
+    def _generate_simulated_response(self, user_message: str, is_greeting: bool = False, is_thanks: bool = False, is_help: bool = False) -> str:
         """Resposta de simulação caso a GROQ_API_KEY ainda não esteja ativa."""
         if is_thanks:
             return "De nada! 😊 Fico feliz em ajudar. Conte comigo se precisar de mais notícias ou informações sobre TI e IA! 🤖👍"
+        if is_help:
+            return (
+                "Olá, *Claudemir*! 👋 Sou o *JARVYS*, seu assistente de TI e IA! 🤖\n\n"
+                "Aqui está o que posso fazer por você:\n"
+                "• 📰 Buscar notícias ao vivo de TI & IA no _Olhar Digital_ e _Canaltech_\n"
+                "• 💡 Esclarecer dúvidas sobre tecnologia e Inteligência Artificial\n"
+                "• ⏰ Enviar resumo diário automático no WhatsApp às 18:00\n\n"
+                "O que gostaria de explorar? 🚀"
+            )
         if is_greeting:
             return (
                 "Olá! 👋 Sou o *JARVYS*, seu assistente pessoal de Tecnologia e Inteligência Artificial! 🤖💻\n\n"
